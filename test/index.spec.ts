@@ -20,3 +20,22 @@ it('basic ModelType Extraction', () => {
 
     expectTypeOf(exceptedRawModel).toMatchTypeOf<modelType>()
 })
+
+/**
+ * Simple Model Validation test.
+ */
+it('basic Validation', () => {
+  const InputModel = Model.create({
+    mail: h.string({
+      maxLength: 4,
+    }),
+    password: h.string({
+      maxLength: 4,
+    }),
+  })
+
+  InputModel.validate({
+    mail: 'mail',
+    password: 'passw',
+  })
+})

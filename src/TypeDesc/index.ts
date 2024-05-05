@@ -1,32 +1,34 @@
 /* eslint-disable ts/no-namespace */
-export class TypeDesc<
+export abstract class TypeDesc<
 Output = any,
-InjectedTypeMeta extends TypeMeta = any,
+Meta extends TypeMeta = any,
 Input = Output,
 > {
   public readonly _input?: Input
-  public readonly _meta?: InjectedTypeMeta
+  public readonly _meta?: Meta
   public readonly _output?: Output
 
-  constructor(meta: InjectedTypeMeta) {
+  constructor(meta: Meta) {
     this._meta = meta
   }
+
+  public abstract validate(input: Input): any
 }
 
-export class TypeDescAny extends TypeDesc<any, any, any> {}
-export interface ModelRawShape { [k: string]: TypeDescAny }
-export type input<T extends TypeDescAny> = T['_input']
-export type output<T extends TypeDescAny> = T['_output']
+export interface DDMVModel { [k: string]: TypeDesc<any, any, any> }
+
+export type input<T extends TypeDesc<any, any, any>> = T['_input']
+export type output<T extends TypeDesc<any, any, any>> = T['_output']
 
 export interface TypeMeta {
   required?: boolean
 }
 
 export type objectOutputType<
-  Shape extends ModelRawShape,
-> = objectUtil.flatten<objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>>
+  RawModel extends DDMVModel,
+> = objectUtil.flatten<objectUtil.addQuestionMarks<baseObjectOutputType<RawModel>>>
 
-export type baseObjectOutputType<Shape extends ModelRawShape> = {
+export type baseObjectOutputType<Shape extends DDMVModel> = {
   [k in keyof Shape]: Shape[k]['_output']
 }
 
@@ -38,10 +40,10 @@ type requiredKeys<T extends object> = {
 }[keyof T]
 
 export type objectInputType<
-    Shape extends ModelRawShape,
+    Shape extends DDMVModel,
   > = objectUtil.flatten<baseObjectInputType<Shape>>
-export type baseObjectInputType<Shape extends ModelRawShape> =
-    objectUtil.addQuestionMarks<{
+export type baseObjectInputType<Shape extends DDMVModel> =
+    Partial<{
       [k in keyof Shape]: Shape[k]['_input']
     }>
 
