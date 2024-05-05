@@ -1,8 +1,7 @@
-/* eslint-disable ts/no-namespace */
 export abstract class TypeDesc<
-Output = any,
-Meta extends TypeMeta = any,
-Input = Output,
+  Output = any,
+  Meta extends TypeMeta = any,
+  Input = Output,
 > {
   public readonly _input?: Input
   public readonly _meta?: Meta
@@ -12,49 +11,43 @@ Input = Output,
     this._meta = meta
   }
 
-  public abstract validate(input: Input): any
+  public abstract validate(input: any, prop: string): ValidationResult
+}
+
+export interface ValidationResult {
+  valid: boolean
+  errors: ErrorDetail[]
+}
+
+interface ErrorDetail {
+  errorId: string
+  prop: string | undefined
+  label: string | undefined
 }
 
 export interface DDMVModel { [k: string]: TypeDesc<any, any, any> }
-
-export type input<T extends TypeDesc<any, any, any>> = T['_input']
-export type output<T extends TypeDesc<any, any, any>> = T['_output']
-
 export interface TypeMeta {
   required?: boolean
 }
 
+type unwrap<T> = T
+type ModelTypeSummary<T> = unwrap<{ [k in keyof T]: T[k] }>
+
 export type objectOutputType<
   RawModel extends DDMVModel,
-> = objectUtil.flatten<objectUtil.addQuestionMarks<baseObjectOutputType<RawModel>>>
-
-export type baseObjectOutputType<Shape extends DDMVModel> = {
-  [k in keyof Shape]: Shape[k]['_output']
-}
-
-type optionalKeys<T extends object> = {
-  [k in keyof T]: undefined extends T[k] ? k : never
-}[keyof T]
-type requiredKeys<T extends object> = {
-  [k in keyof T]: undefined extends T[k] ? never : k
-}[keyof T]
+> = ModelTypeSummary<Partial<DDMVOutputType<RawModel>>>
 
 export type objectInputType<
-    Shape extends DDMVModel,
-  > = objectUtil.flatten<baseObjectInputType<Shape>>
-export type baseObjectInputType<Shape extends DDMVModel> =
-    Partial<{
-      [k in keyof Shape]: Shape[k]['_input']
-    }>
+  RawModel extends DDMVModel,
+> = ModelTypeSummary<Partial<DDMVInputType<RawModel>>>
 
-namespace objectUtil{
-  export type identity<T> = T
-  export type addQuestionMarks<T extends object, _O = any> = {
-    [K in requiredKeys<T>]: T[K]
-  } & {
-    [K in optionalKeys<T>]?: T[K]
-  } & {
-    [k in keyof T]?: unknown
-  }
-  export type flatten<T> = identity<{ [k in keyof T]: T[k] }>
+type DDMVOutputType<RawModel extends DDMVModel> = {
+  [k in keyof RawModel]: RawModel[k]['_output']
 }
+
+type DDMVInputType<RawModel extends DDMVModel> = {
+  [k in keyof RawModel]: RawModel[k]['_input']
+}
+
+export type input<T extends TypeDesc<any, any, any>> = T['_input']
+export type output<T extends TypeDesc<any, any, any>> = T['_output']

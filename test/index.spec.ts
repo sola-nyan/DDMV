@@ -1,4 +1,4 @@
-import { expectTypeOf, it } from 'vitest'
+import { expect, expectTypeOf, it } from 'vitest'
 import type { ModelRawType } from '~/index'
 import { Model, h } from '~/index'
 
@@ -11,14 +11,14 @@ it('basic ModelType Extraction', () => {
     password: h.string(),
   })
 
-    type modelType = ModelRawType<typeof InputModel>
+  type modelType = ModelRawType<typeof InputModel>
 
-    const exceptedRawModel = {
-      mail: 'mail',
-      password: 'password',
-    }
+  const exceptedRawModel: modelType = {
+    mail: 'mail',
+    password: 'password',
+  }
 
-    expectTypeOf(exceptedRawModel).toMatchTypeOf<modelType>()
+  expectTypeOf(exceptedRawModel).toMatchTypeOf<modelType>()
 })
 
 /**
@@ -34,8 +34,12 @@ it('basic Validation', () => {
     }),
   })
 
-  InputModel.validate({
+  const res = InputModel.validate({
     mail: 'mail',
     password: 'passw',
   })
+
+  expect(res.valid).toBeFalsy()
+  expect(res.errors).length(1)
+  expect(res.errors[0].prop).eq('password')
 })
