@@ -1,6 +1,17 @@
-import type { DDMVModel, DDMVModelInputType, DDMVModelOutputType, TypeMeta } from '../'
-import { TypeDesc } from '../'
-import type { ValidationResultContext } from '~/Utils/ValidationResultHelper'
+import { TypeDesc, type TypeMeta } from '../core/TypeDesc'
+import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
+
+type Unwrap<T> = T
+interface DDMVModel { [k: string]: TypeDesc<any, any, any> }
+type DDMVModelInputType<
+  RawModel extends DDMVModel,
+> = Unwrap<{ [k in keyof RawModel]: RawModel[k]['_input'] }>
+type DDMVModelOutputType<
+  RawModel extends DDMVModel,
+> = Unwrap<{ [k in keyof RawModel]: RawModel[k]['_output'] }>
+
+export type DDMVModelInput<T extends TypeDesc<any, any, any>> = T['_input']
+export type DDMVModelOutput<T extends TypeDesc<any, any, any>> = T['_output']
 
 export interface TypeMetaObject<
   T extends DDMVModel = DDMVModel,

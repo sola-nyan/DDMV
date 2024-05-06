@@ -1,5 +1,3 @@
-import type { ValidationResult } from '~/Validator/ValidationResultContext'
-
 export class ValidationResultContext<T = any> {
     private result: ValidationResult
     private input: T
@@ -20,6 +18,12 @@ export class ValidationResultContext<T = any> {
         return this
     }
 
+    public apply(valid: boolean, patternId: string, prop?: string, label?: string) {
+        if (!valid)
+            return this.addError(patternId, prop, label)
+        return true
+    }
+
     public addError(errorId: string, prop?: string, label?: string) {
         this.result.valid = false
         this.result.errors.push({
@@ -37,4 +41,15 @@ export class ValidationResultContext<T = any> {
     public getInput() {
         return this.input
     }
+}
+
+export interface ValidationResult {
+    valid: boolean
+    errors: ErrorDetail[]
+}
+
+interface ErrorDetail {
+    errorId: string
+    prop: string | undefined
+    label: string | undefined
 }
