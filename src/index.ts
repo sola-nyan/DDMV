@@ -7,5 +7,7 @@ export const h = {
   string: (meta?: TypeMetaString) => TypeDescString.create(meta),
 }
 
-export { TypeDescObject as Model }
+const DDMV = TypeDescObject.create
+
+export { DDMV }
 export type { output as ModelRawType }

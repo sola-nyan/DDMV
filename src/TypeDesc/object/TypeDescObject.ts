@@ -1,6 +1,6 @@
-import type { DDMVModel, TypeMeta, ValidationResult, objectInputType, objectOutputType } from '../'
+import type { DDMVModel, DDMVModelInputType, DDMVModelOutputType, TypeMeta } from '../'
 import { TypeDesc } from '../'
-import { ValidationResultHelper } from '~/Utils/ValidationResultHelper'
+import type { ValidationResultContext } from '~/Utils/ValidationResultHelper'
 
 export interface TypeMetaObject<
   T extends DDMVModel = DDMVModel,
@@ -10,28 +10,26 @@ export interface TypeMetaObject<
 
 export class TypeDescObject<
   T extends DDMVModel,
-  Output = objectOutputType<T>,
-  Input = objectInputType<T>,
+  Output = DDMVModelOutputType<T>,
+  Input = DDMVModelInputType<T>,
 >
   extends TypeDesc<
     Output,
     TypeMetaObject<T>,
     Input
   > {
-  public validate(input: any, prop?: string, label?: string): ValidationResult {
-    const h = new ValidationResultHelper()
-    if (input instanceof Object === false)
-      return h.addError('object.nest_not_supported', prop, label)
-
+  public validateInternal(ctx: ValidationResultContext, input: Input, parentPropKey?: string) {
     const model = this._meta!.DDMV()
     const keys = Object.keys(model)
 
-    for (const key of keys) {
-      const prop = model[key]
-      h.merge(prop.validate(input[key], key))
+    for (const thisKey of keys) {
+      const thisProp = model[thisKey]
+      const thisPropKey = parentPropKey ? `${parentPropKey}.${thisKey}` : thisKey
+      const thisPropVal = (input as any)[thisKey]
+      thisProp.validate(thisPropVal, thisPropKey, ctx)
     }
 
-    return h.getResult()
+    return true
   }
 
   public static create<T extends DDMVModel>(model: T) {

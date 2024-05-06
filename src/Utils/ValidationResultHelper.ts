@@ -1,9 +1,11 @@
 import type { ValidationResult } from '~/TypeDesc'
 
-export class ValidationResultHelper {
+export class ValidationResultContext<T = any> {
     private result: ValidationResult
+    private input: T
 
-    constructor() {
+    constructor(input: any) {
+        this.input = input
         this.result = {
             valid: true,
             errors: [],
@@ -15,6 +17,7 @@ export class ValidationResultHelper {
             return
         this.result.valid = false
         this.result.errors.push(...vr.errors)
+        return this
     }
 
     public addError(errorId: string, prop?: string, label?: string) {
@@ -24,10 +27,14 @@ export class ValidationResultHelper {
             label,
             prop,
         })
-        return this.result
+        return false
     }
 
     public getResult() {
         return this.result
+    }
+
+    public getInput() {
+        return this.input
     }
 }
