@@ -28,10 +28,7 @@ export class TypeDescArrayString extends TypeDesc<string[], TypeMetaArrayString,
         return true
     }
 
-    static create(meta: TypeMetaArrayString = {
-        string: {},
-        array: {},
-    }) {
+    static create(meta: TypeMetaArrayString = {}) {
         return new TypeDescArrayString(meta)
     }
 }

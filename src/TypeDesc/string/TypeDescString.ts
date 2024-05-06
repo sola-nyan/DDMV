@@ -1,9 +1,10 @@
 import { TypeDesc, type TypeMeta } from '../core/TypeDesc'
-import { VALIDATE_PATTERN, Validator } from '~/Validator/Validator'
+import { ValidatorUtil } from '~/Validator/Validator'
 import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
 
 export interface TypeMetaString extends TypeMeta {
     string?: {
+        required?: boolean
         maxLength?: number
         minLength?: number
     }
@@ -11,28 +12,44 @@ export interface TypeMetaString extends TypeMeta {
 
 export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
     public validateInternal(ctx: ValidationResultContext, input: string, prop?: string) {
-        Validator(
-            ctx,
-            VALIDATE_PATTERN.STRING.MAX_LENGTH,
+        const ErrorApplier = (patternId: string) => {
+            ctx.addError(patternId, prop, this._meta?.label)
+        }
+
+        /**
+         * 必須
+         */
+        ValidatorUtil(
+            RULE => RULE.STRING.REQUIRED,
+            input,
+            this._meta?.string?.required,
+            ErrorApplier,
+        )
+
+        /**
+         * 最大文字長
+         */
+        ValidatorUtil(
+            RULE => RULE.STRING.MAX_LENGTH,
+            input,
             this._meta?.string?.maxLength,
-            input,
-            prop,
-            this._meta!.label,
+            ErrorApplier,
         )
-        Validator(
-            ctx,
-            VALIDATE_PATTERN.STRING.MIN_LENGTH,
+
+        /**
+         * 最小文字長
+         */
+        ValidatorUtil(
+            RULE => RULE.STRING.MIN_LENGTH,
+            input,
             this._meta?.string?.minLength,
-            input,
-            prop,
-            this._meta!.label,
+            ErrorApplier,
         )
+
         return true
     }
 
-    static create(meta: TypeMetaString = {
-        string: {},
-    }) {
+    static create(meta: TypeMetaString = {}) {
         return new TypeDescString(meta)
     }
 }

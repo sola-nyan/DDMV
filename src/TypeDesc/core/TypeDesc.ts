@@ -28,6 +28,7 @@ export abstract class TypeDesc<
         }
         catch (e) {
             parentCtx.addError('ddmv.unhandle_exception', parentPropKey)
+            console.error('ddmv.unhandle_exception', e)
         }
         return parentCtx.getResult()
     }
