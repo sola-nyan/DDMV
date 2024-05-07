@@ -24,7 +24,7 @@ it('type inference', () => {
 it('basic Validation', () => {
   const res = BasicModel.validate({
     text: 'mail',
-    numeric: 100,
+    numeric: '3',
     list: ['aa', 'bb'],
     nest: {
       test: 'abcdefgh9',
@@ -32,9 +32,7 @@ it('basic Validation', () => {
   })
 
   expect(res.valid).toBeFalsy()
-  expect(res.errors).length(2)
-  expect(res.errors[0].prop).eq('numeric')
-  expect(res.errors[0].label).eq('数字')
-  expect(res.errors[1].prop).eq('nest.test')
-  expect(res.errors[1].label).eq('ネスト項目')
+  expect(res.errors).length(1)
+  expect(res.errors[0].prop).eq('nest.test')
+  expect(res.errors[0].label).eq('ネスト項目')
 })

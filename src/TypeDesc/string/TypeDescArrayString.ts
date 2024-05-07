@@ -1,4 +1,4 @@
-import { TypeDesc } from '../core/TypeDesc'
+import { TypeDesc } from '../object/TypeDescObject'
 import type { TypeMetaString } from './TypeDescString'
 import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
 
@@ -10,6 +10,10 @@ export interface TypeMetaArrayString extends TypeMetaString {
 }
 
 export class TypeDescArrayString extends TypeDesc<string[], TypeMetaArrayString, string[]> {
+    protected convertIO(input: string[]): string[] {
+        return input
+    }
+
     public validateInternal(ctx: ValidationResultContext, prop: string, input: string[]) {
         if (this._meta?.array?.maxLength && this._meta.array.maxLength < input.length)
             return ctx.addError('array.maxLength', prop, this._meta.label)

@@ -1,4 +1,5 @@
-import { TypeDesc, type TypeMeta } from '../core/TypeDesc'
+import type { TypeMeta } from '../object/TypeDescObject'
+import { TypeDesc } from '../object/TypeDescObject'
 import { ValidatorUtil } from '~/Validator/Validator'
 import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
 
@@ -11,6 +12,10 @@ export interface TypeMetaString extends TypeMeta {
 }
 
 export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
+    protected convertIO(input: string) {
+        return String(input)
+    }
+
     public validateInternal(ctx: ValidationResultContext, prop: string, input: string) {
         const ErrorApplier = (patternId: string) => {
             ctx.addError(patternId, prop, this._meta?.label)
