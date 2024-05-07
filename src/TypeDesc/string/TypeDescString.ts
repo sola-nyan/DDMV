@@ -11,7 +11,7 @@ export interface TypeMetaString extends TypeMeta {
 }
 
 export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
-    public validateInternal(ctx: ValidationResultContext, input: string, prop?: string) {
+    public validateInternal(ctx: ValidationResultContext, prop: string, input: string) {
         const ErrorApplier = (patternId: string) => {
             ctx.addError(patternId, prop, this._meta?.label)
         }

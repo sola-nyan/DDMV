@@ -1,8 +1,13 @@
-import type { ValidationResult } from '~/Validator/ValidationResultContext'
 import { ValidationResultContext } from '~/Validator/ValidationResultContext'
 
 export interface TypeMeta {
     label?: string
+    validators?: CustomValidatorConfig[]
+}
+
+export interface CustomValidatorConfig {
+    validator: (value: any, property: string, unsafe: { ctx: ValidationResultContext }) => boolean
+    patternIdSuffix: string
 }
 
 export abstract class TypeDesc<
@@ -18,20 +23,44 @@ export abstract class TypeDesc<
         this._meta = meta
     }
 
-    public validate(input: Input, parentPropKey?: string, parentCtx = new ValidationResultContext<Input>(input)): ValidationResult {
+    protected abstract validateInternal(ctx: ValidationResultContext, property: string | undefined, input: any): boolean
+
+    public validate(input: Input, property?: string, ctx = new ValidationResultContext<Input>(input)) {
         try {
-            const res = this.validateInternal(parentCtx, input, parentPropKey)
-            if (parentPropKey && res) {
-                // custom Validator invoke
-                // console.log(parentPropKey, res, ctx.getInput())
+            const res = this.validateInternal(ctx, property, input)
+            if (res && property && this._meta?.validators) {
+                for (const vConfig of this._meta?.validators) {
+                    const cvRes = vConfig.validator(input, property, { ctx })
+                    if (!cvRes) {
+                        // TODO: add Error
+                    }
+                }
             }
         }
         catch (e) {
-            parentCtx.addError('ddmv.unhandle_exception', parentPropKey)
-            console.error('ddmv.unhandle_exception', e)
+            ctx.addError('ddmv.unhandle_exception', property)
+            // TODO: ValidateSkipErrorObject
+            // eslint-disable-next-line no-console
+            console.log('ddmv.unhandle_exception', e)
         }
-        return parentCtx.getResult()
+        return ctx.getResult()
     }
 
-    protected abstract validateInternal(ctx: ValidationResultContext, input: any, parentPropKey?: string): boolean
+    // protected validateObjectProps(ctx: ValidationResultContext, model: DDMVModel, input: Input, parentPropKey?: string) {
+    //     const keys = Object.keys(model)
+    //     for (const thisKey of keys) {
+    //         const thisProp = model[thisKey]
+    //         const thisPropKey = parentPropKey ? `${parentPropKey}.${thisKey}` : thisKey
+    //         try {
+    //             const thisPropVal = (input as any)[thisKey]
+    //             const res = thisProp.validateInternal(ctx, thisPropKey, thisPropVal)
+    //             if (thisProp instanceof TypeDescObject === false)
+    //                 ctx.mapping(thisPropKey, res ? thisPropVal : undefined)
+    //         }
+    //         catch (e) {
+    //             ctx.mapping(thisPropKey, undefined)
+    //             throw e
+    //         }
+    //     }
+    // }
 }

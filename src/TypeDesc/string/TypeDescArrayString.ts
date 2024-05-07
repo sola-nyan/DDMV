@@ -10,7 +10,7 @@ export interface TypeMetaArrayString extends TypeMetaString {
 }
 
 export class TypeDescArrayString extends TypeDesc<string[], TypeMetaArrayString, string[]> {
-    public validateInternal(ctx: ValidationResultContext, input: string[], prop?: string) {
+    public validateInternal(ctx: ValidationResultContext, prop: string, input: string[]) {
         if (this._meta?.array?.maxLength && this._meta.array.maxLength < input.length)
             return ctx.addError('array.maxLength', prop, this._meta.label)
 

@@ -1,16 +1,31 @@
+import { ObjectWrapper } from '@solanyan/object-wrapper'
+
 export class ValidationResultContext<T = any> {
     private result: ValidationResult
     private input: T
+    private mapper: ObjectWrapper
 
     constructor(input: any) {
         this.input = input
         this.result = {
             valid: true,
+            mapped: {},
             errors: [],
         }
+        this.mapper = new ObjectWrapper(this.result.mapped)
+    }
+
+    public mapping(prop: string | undefined, input: any) {
+        if (prop)
+            this.mapper.setPropVal(prop, input)
+    }
+
+    public mergeContext(ctx: ValidationResultContext) {
+        return this.merge(ctx.getResult())
     }
 
     public merge(vr: ValidationResult) {
+        Object.assign(this.result.mapped, vr.mapped)
         if (vr.errors.length === 0)
             return
         this.result.valid = false
@@ -18,20 +33,18 @@ export class ValidationResultContext<T = any> {
         return this
     }
 
-    public apply(valid: boolean, patternId: string, prop?: string, label?: string) {
-        if (!valid)
-            return this.addError(patternId, prop, label)
-        return true
-    }
-
-    public addError(errorId: string, prop?: string, label?: string) {
+    public addError(patternId: string, prop?: string, label?: string) {
         this.result.valid = false
         this.result.errors.push({
-            errorId,
+            patternId,
             label,
             prop,
         })
         return false
+    }
+
+    public isValid() {
+        return this.result.valid
     }
 
     public getResult() {
@@ -39,17 +52,18 @@ export class ValidationResultContext<T = any> {
     }
 
     public getInput() {
-        return this.input
+        return (() => this.input)()
     }
 }
 
 export interface ValidationResult {
     valid: boolean
+    mapped: any
     errors: ErrorDetail[]
 }
 
 interface ErrorDetail {
-    errorId: string
+    patternId: string
     prop: string | undefined
     label: string | undefined
 }

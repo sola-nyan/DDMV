@@ -4,6 +4,11 @@ export const VALIDATE_PATTERN = {
         MAX_LENGTH: 'string.maxLength',
         MIN_LENGTH: 'string.minLength',
     },
+    NUMBER: {
+        REQUIRED: 'number.required',
+        MAX_RANGE: 'number.maxRange',
+        MIN_RANGE: 'number.minRange',
+    },
 }
 
 export function ValidatorUtil(

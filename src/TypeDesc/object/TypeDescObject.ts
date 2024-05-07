@@ -1,17 +1,17 @@
 import { TypeDesc, type TypeMeta } from '../core/TypeDesc'
-import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
+import { ValidationResultContext } from '~/Validator/ValidationResultContext'
+
+export interface DDMVModel { [k: string]: TypeDesc<any, any, any> }
+export type DDMVModelInput<T extends TypeDesc<any, any, any>> = T['_input']
+export type DDMVModelOutput<T extends TypeDesc<any, any, any>> = T['_output']
 
 type Unwrap<T> = T
-interface DDMVModel { [k: string]: TypeDesc<any, any, any> }
 type DDMVModelInputType<
   RawModel extends DDMVModel,
 > = Unwrap<{ [k in keyof RawModel]: RawModel[k]['_input'] }>
 type DDMVModelOutputType<
   RawModel extends DDMVModel,
 > = Unwrap<{ [k in keyof RawModel]: RawModel[k]['_output'] }>
-
-export type DDMVModelInput<T extends TypeDesc<any, any, any>> = T['_input']
-export type DDMVModelOutput<T extends TypeDesc<any, any, any>> = T['_output']
 
 export interface TypeMetaObject<
   T extends DDMVModel = DDMVModel,
@@ -29,17 +29,24 @@ export class TypeDescObject<
     TypeMetaObject<T>,
     Input
   > {
-  public validateInternal(ctx: ValidationResultContext, input: Input, parentPropKey?: string) {
+  public validateInternal(parentCtx: ValidationResultContext, parentPropKey: string, input: Input) {
     const model = this._meta!.DDMV()
     const keys = Object.keys(model)
-
     for (const thisKey of keys) {
       const thisProp = model[thisKey]
       const thisPropKey = parentPropKey ? `${parentPropKey}.${thisKey}` : thisKey
       const thisPropVal = (input as any)[thisKey]
-      thisProp.validate(thisPropVal, thisPropKey, ctx)
+      const thisCtx = new ValidationResultContext<Input>(parentCtx.getInput())
+      const res = thisProp.validate(thisPropVal, thisPropKey, thisCtx)
+      // Input mapping (Terminal node only)
+      if (!(thisProp instanceof TypeDescObject)) {
+        if (res.valid)
+          thisCtx.mapping(thisPropKey, thisPropVal)
+        else
+          thisCtx.mapping(thisPropKey, undefined)
+      }
+      parentCtx.mergeContext(thisCtx)
     }
-
     return true
   }
 
