@@ -64,15 +64,13 @@ export abstract class TypeDesc<
                     if (e instanceof ValidationError)
                         ctx.mapping(property, undefined)
                     else
-                        console.error(e)
+                        throw e
                 }
             }
         }
         catch (e) {
             ctx.addError('ddmv.unhandle_exception', property)
-            // TODO: ValidateSkipErrorObject
-            // eslint-disable-next-line no-console
-            console.log('ddmv.unhandle_exception', e)
+            console.error('ddmv.unhandle_exception', e)
         }
         return ctx.getResult()
     }

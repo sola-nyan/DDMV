@@ -17,7 +17,7 @@ export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
     }
 
     public validateInternal(ctx: ValidationResultContext, prop: string, input: any) {
-        const ErrorApplier = (patternId: string) => {
+        const ErrorReporter = (patternId: string) => {
             ctx.addError(patternId, prop, this._meta?.label)
         }
 
@@ -28,7 +28,7 @@ export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
             RULE => RULE.STRING.REQUIRED,
             input,
             this._meta?.string?.required,
-            ErrorApplier,
+            ErrorReporter,
         )
 
         /**
@@ -38,7 +38,7 @@ export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
             RULE => RULE.STRING.MAX_LENGTH,
             input,
             this._meta?.string?.maxLength,
-            ErrorApplier,
+            ErrorReporter,
         )
 
         /**
@@ -48,7 +48,7 @@ export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
             RULE => RULE.STRING.MIN_LENGTH,
             input,
             this._meta?.string?.minLength,
-            ErrorApplier,
+            ErrorReporter,
         )
 
         return { valid: true, parsed: input }
