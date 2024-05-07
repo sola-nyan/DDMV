@@ -25,7 +25,7 @@ export abstract class TypeDesc<
 
     protected abstract validateInternal(ctx: ValidationResultContext, property: string | undefined, input: any): boolean
 
-    public validate(input: Input, property?: string, ctx = new ValidationResultContext<Input>(input)) {
+    public validate(input: Input, property?: string, ctx = new ValidationResultContext<Input, Output>(input)) {
         try {
             const res = this.validateInternal(ctx, property, input)
             if (res && property && this._meta?.validators) {

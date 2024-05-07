@@ -1,15 +1,15 @@
 import { ObjectWrapper } from '@solanyan/object-wrapper'
 
-export class ValidationResultContext<T = any> {
-    private result: ValidationResult
-    private input: T
+export class ValidationResultContext<INPUT = any, OUTPUT = any> {
+    private result: ValidationResult<OUTPUT>
+    private input: INPUT
     private mapper: ObjectWrapper
 
     constructor(input: any) {
         this.input = input
         this.result = {
             valid: true,
-            mapped: {},
+            mapped: {} as OUTPUT,
             errors: [],
         }
         this.mapper = new ObjectWrapper(this.result.mapped)
@@ -25,7 +25,7 @@ export class ValidationResultContext<T = any> {
     }
 
     public merge(vr: ValidationResult) {
-        Object.assign(this.result.mapped, vr.mapped)
+        Object.assign(this.result.mapped as object, vr.mapped)
         if (vr.errors.length === 0)
             return
         this.result.valid = false
@@ -56,9 +56,9 @@ export class ValidationResultContext<T = any> {
     }
 }
 
-export interface ValidationResult {
+export interface ValidationResult<MappedModel = any> {
     valid: boolean
-    mapped: any
+    mapped: MappedModel
     errors: ErrorDetail[]
 }
 

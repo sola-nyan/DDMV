@@ -29,7 +29,7 @@ export class TypeDescObject<
     TypeMetaObject<T>,
     Input
   > {
-  public validateInternal(parentCtx: ValidationResultContext, parentPropKey: string, input: Input) {
+  protected validateInternal(parentCtx: ValidationResultContext, parentPropKey: string, input: Input) {
     const model = this._meta!.DDMV()
     const keys = Object.keys(model)
     for (const thisKey of keys) {
@@ -37,14 +37,11 @@ export class TypeDescObject<
       const thisPropKey = parentPropKey ? `${parentPropKey}.${thisKey}` : thisKey
       const thisPropVal = (input as any)[thisKey]
       const thisCtx = new ValidationResultContext<Input>(parentCtx.getInput())
-      const res = thisProp.validate(thisPropVal, thisPropKey, thisCtx)
+      thisProp.validate(thisPropVal, thisPropKey, thisCtx)
       // Input mapping (Terminal node only)
-      if (!(thisProp instanceof TypeDescObject)) {
-        if (res.valid)
-          thisCtx.mapping(thisPropKey, thisPropVal)
-        else
-          thisCtx.mapping(thisPropKey, undefined)
-      }
+      if (!(thisProp instanceof TypeDescObject))
+        thisCtx.mapping(thisPropKey, thisPropVal)
+
       parentCtx.mergeContext(thisCtx)
     }
     return true
