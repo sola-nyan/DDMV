@@ -1,4 +1,5 @@
 import { ValidationResultContext } from '~/Validator/ValidationResultContext'
+import { ValidationError } from '~/Validator/Validator'
 /**
  * ============================================================
  * TypeDesc refs
@@ -27,11 +28,13 @@ export abstract class TypeDesc<
         this._meta = meta
     }
 
-    protected abstract validateInternal(ctx: ValidationResultContext, property: string | undefined, input: Output): boolean
+    protected abstract validateInternal(ctx: ValidationResultContext, property: string | undefined, input: any): { valid: boolean, parsed: Output | undefined }
 
-    protected abstract convertIO(input: Input): Output
-
-    public validate(input: Input, property?: string, ctx = new ValidationResultContext<Input, Output>(input)) {
+    public validate(
+        input: any,
+        property?: string,
+        ctx = new ValidationResultContext<Input, Output>(input),
+    ) {
         try {
             if (this instanceof TypeDescObject) {
                 const model = this._meta!.DDMV()
@@ -39,28 +42,29 @@ export abstract class TypeDesc<
                 for (const thisKey of keys) {
                     const thisProp = model[thisKey]
                     const thisPropKey = property ? `${property}.${thisKey}` : thisKey
-                    const thisPropVal = thisProp.convertIO((input as any)[thisKey]) // Dummy Converter
+                    const thisPropVal = input[thisKey]
                     thisProp.validate(thisPropVal, thisPropKey, ctx)
                 }
             }
             else {
                 try {
-                    const convedIO = this.convertIO(input)
-                    let res = this.validateInternal(ctx, property, convedIO)
+                    const res = this.validateInternal(ctx, property, input)
                     if (res && property && this._meta?.validators) {
                         for (const vConfig of this._meta?.validators) {
                             const cvRes = vConfig.validator(input, property, { ctx })
                             if (!cvRes) {
                                 // TODO: add Error
-                                res = false
+                                res.valid = false
                             }
                         }
                     }
-                    ctx.mapping(property, res ? convedIO : undefined)
+                    ctx.mapping(property, res.parsed)
                 }
                 catch (e) {
-                    ctx.mapping(property, undefined)
-                    console.error(e)
+                    if (e instanceof ValidationError)
+                        ctx.mapping(property, undefined)
+                    else
+                        console.error(e)
                 }
             }
         }
@@ -107,12 +111,12 @@ export class TypeDescObject<
         TypeMetaObject<T>,
         Input
     > {
-    public convertIO(input: Input): Output {
+    protected convertIO(input: Input): Output {
         return input as unknown as Output // No convert :Model Root
     }
 
-    protected validateInternal(_parentCtx: ValidationResultContext, _parentPropKey: string, _input: Output) {
-        return true // No implements :Model Root
+    protected validateInternal(_parentCtx: ValidationResultContext, _parentPropKey: string, input: any) {
+        return { valid: true, parsed: this.convertIO(input) } // No implements :Model Root
     }
 
     public static create<T extends DDMVModel>(model: T) {

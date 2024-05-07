@@ -12,11 +12,11 @@ export interface TypeMetaString extends TypeMeta {
 }
 
 export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
-    protected convertIO(input: string) {
-        return String(input)
+    protected convertIO(input: string | undefined) {
+        return input ? String(input) : undefined
     }
 
-    public validateInternal(ctx: ValidationResultContext, prop: string, input: string) {
+    public validateInternal(ctx: ValidationResultContext, prop: string, input: any) {
         const ErrorApplier = (patternId: string) => {
             ctx.addError(patternId, prop, this._meta?.label)
         }
@@ -51,7 +51,7 @@ export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
             ErrorApplier,
         )
 
-        return true
+        return { valid: true, parsed: input }
     }
 
     static create(meta: TypeMetaString = {}) {

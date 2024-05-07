@@ -14,9 +14,11 @@ export class TypeDescArrayString extends TypeDesc<string[], TypeMetaArrayString,
         return input
     }
 
-    public validateInternal(ctx: ValidationResultContext, prop: string, input: string[]) {
-        if (this._meta?.array?.maxLength && this._meta.array.maxLength < input.length)
-            return ctx.addError('array.maxLength', prop, this._meta.label)
+    public validateInternal(ctx: ValidationResultContext, prop: string, input: any) {
+        if (this._meta?.array?.maxLength && this._meta.array.maxLength < input.length) {
+            ctx.addError('array.maxLength', prop, this._meta.label)
+            return { valid: false, parsed: input }
+        }
 
         for (const idx in input) {
             if (this._meta?.string?.maxLength && this._meta.string.maxLength < input[idx].length) {
@@ -25,11 +27,11 @@ export class TypeDescArrayString extends TypeDesc<string[], TypeMetaArrayString,
                 if (this._meta.array?.reportIndex === true)
                     ctx.addError('string.maxLength', `${prop}[${idx}]`, this._meta.label)
 
-                return false
+                return { valid: false, parsed: input }
             }
         }
 
-        return true
+        return { valid: true, parsed: input }
     }
 
     static create(meta: TypeMetaArrayString = {}) {
