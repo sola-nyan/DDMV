@@ -25,7 +25,7 @@ it('basic Validation', () => {
   const res = BasicModel.validate({
     text: 'mail',
     numeric: '3',
-    list: ['aa', 'bb'],
+    list: ['aa', 'bba'],
     nest: {
       test: 'abcdefgh9',
     },

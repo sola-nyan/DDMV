@@ -1,71 +1,91 @@
+import type { ValidationErrorThrower } from '../object/TypeDescObject'
 import { TypeDesc } from '../object/TypeDescObject'
 import type { TypeMetaString } from './TypeDescString'
-import { ValidatorUtil } from '~/Validator/Validator'
-import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
+import { tryParseArray, tryParseString } from '~/Utils/TryParse'
+import { UnsafeValidatorCaller, V_RULE } from '~/Utils/ValidLogicCaller'
 
 export interface TypeMetaArrayString extends TypeMetaString {
     array?: {
+        required?: boolean
         maxLength?: number
-        reportIndex?: true | 'only'
+        minLength?: number
     }
 }
 
 export class TypeDescArrayString extends TypeDesc<string[], TypeMetaArrayString, string[]> {
-    protected convertIO(input: string[]): string[] {
+    protected tryParse(property: string | undefined, input: any) {
+        const anyArray = tryParseArray(input, { property, label: this._meta?.label })
+        if (anyArray === undefined)
+            return undefined
+        for (const idx in anyArray)
+            anyArray[idx] = tryParseString(anyArray[idx], { property, label: this._meta?.label })
         return input
     }
 
-    public validateInternal(ctx: ValidationResultContext, prop: string, input: any) {
-        // const ArrayErrorReporter = (patternId: string) => {
-        //     ctx.addError(patternId, prop, this._meta?.label)
-        // }
+    protected validateInternal(property: string | undefined, parsed: string[], validationErrorThrower: ValidationErrorThrower) {
+        /**
+         * 配列必須
+         */
+        UnsafeValidatorCaller(
+            V_RULE.ARRAY.REQUIRED,
+            parsed,
+            this._meta?.array?.required,
+            validationErrorThrower,
+        )
 
-        // if (this._meta?.array?.maxLength && this._meta.array.maxLength < input.length) {
-        //     ctx.addError('array.maxLength', prop, this._meta.label)
-        //     return { valid: false, parsed: input }
-        // }
+        /**
+         * 最大配列数
+         */
+        UnsafeValidatorCaller(
+            V_RULE.ARRAY.MAX_LENGTH,
+            parsed,
+            this._meta?.array?.maxLength,
+            validationErrorThrower,
+        )
 
-        for (const idx in input) {
-            const StrigErrorReporter = (patternId: string) => {
-                ctx.addError(patternId, prop, this._meta?.label)
-                if (this._meta?.array?.reportIndex !== 'only')
-                    ctx.addError('string.maxLength', `${prop}`, this._meta?.label)
-                if (this._meta?.array?.reportIndex === true)
-                    ctx.addError('string.maxLength', `${prop}[${idx}]`, this._meta.label)
-            }
+        /**
+         * 最小配列数
+         */
+        UnsafeValidatorCaller(
+            V_RULE.ARRAY.MIN_LENGTH,
+            parsed,
+            this._meta?.array?.minLength,
+            validationErrorThrower,
+        )
 
+        for (const idx in parsed) {
             /**
              * 必須
              */
-            ValidatorUtil(
-                RULE => RULE.STRING.REQUIRED,
-                input,
+            UnsafeValidatorCaller(
+                V_RULE.STRING.REQUIRED,
+                parsed[idx],
                 this._meta?.string?.required,
-                StrigErrorReporter,
+                validationErrorThrower,
             )
 
             /**
              * 最大文字長
              */
-            ValidatorUtil(
-                RULE => RULE.STRING.MAX_LENGTH,
-                input,
+            UnsafeValidatorCaller(
+                V_RULE.STRING.MAX_LENGTH,
+                parsed[idx],
                 this._meta?.string?.maxLength,
-                StrigErrorReporter,
+                validationErrorThrower,
             )
 
             /**
              * 最小文字長
              */
-            ValidatorUtil(
-                RULE => RULE.STRING.MIN_LENGTH,
-                input,
+            UnsafeValidatorCaller(
+                V_RULE.STRING.MIN_LENGTH,
+                parsed[idx],
                 this._meta?.string?.minLength,
-                StrigErrorReporter,
+                validationErrorThrower,
             )
         }
 
-        return { valid: true, parsed: input }
+        return true
     }
 
     static create(meta: TypeMetaArrayString = {}) {

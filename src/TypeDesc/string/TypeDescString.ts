@@ -1,7 +1,7 @@
-import type { TypeMeta } from '../object/TypeDescObject'
+import type { TypeMeta, ValidationErrorThrower } from '../object/TypeDescObject'
 import { TypeDesc } from '../object/TypeDescObject'
-import { ValidatorUtil } from '~/Validator/Validator'
-import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
+import { UnsafeValidatorCaller, V_RULE } from '~/Utils/ValidLogicCaller'
+import { tryParseString } from '~/Utils/TryParse'
 
 export interface TypeMetaString extends TypeMeta {
     string?: {
@@ -12,46 +12,42 @@ export interface TypeMetaString extends TypeMeta {
 }
 
 export class TypeDescString extends TypeDesc<string, TypeMetaString, string> {
-    protected convertIO(input: string | undefined) {
-        return input ? String(input) : undefined
+    protected tryParse(property: string | undefined, input: string) {
+        return tryParseString(input, { property, label: this._meta?.label })
     }
 
-    public validateInternal(ctx: ValidationResultContext, prop: string, input: any) {
-        const ErrorReporter = (patternId: string) => {
-            ctx.addError(patternId, prop, this._meta?.label)
-        }
-
+    protected validateInternal(property: string | undefined, parsed: string, validationErrorThrower: ValidationErrorThrower) {
         /**
          * 必須
          */
-        ValidatorUtil(
-            RULE => RULE.STRING.REQUIRED,
-            input,
+        UnsafeValidatorCaller(
+            V_RULE.STRING.REQUIRED,
+            parsed,
             this._meta?.string?.required,
-            ErrorReporter,
+            validationErrorThrower,
         )
 
         /**
          * 最大文字長
          */
-        ValidatorUtil(
-            RULE => RULE.STRING.MAX_LENGTH,
-            input,
+        UnsafeValidatorCaller(
+            V_RULE.STRING.MAX_LENGTH,
+            parsed,
             this._meta?.string?.maxLength,
-            ErrorReporter,
+            validationErrorThrower,
         )
 
         /**
          * 最小文字長
          */
-        ValidatorUtil(
-            RULE => RULE.STRING.MIN_LENGTH,
-            input,
+        UnsafeValidatorCaller(
+            V_RULE.STRING.MIN_LENGTH,
+            parsed,
             this._meta?.string?.minLength,
-            ErrorReporter,
+            validationErrorThrower,
         )
 
-        return { valid: true, parsed: input }
+        return true
     }
 
     static create(meta: TypeMetaString = {}) {

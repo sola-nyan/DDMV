@@ -49,4 +49,36 @@ describe('文字型', () => {
     expect(p2.valid).toBeTruthy()
     expect(p3.valid).toBeTruthy()
   })
+
+  it('カスタムバリデータ', () => {
+    const Model = DDMV({
+      text: h.string({
+        validators: [
+          {
+            validator: (value: string, _property: string, _unsafe) => {
+              return value.includes('@')
+            },
+            params: undefined,
+            patternIdSuffix: 'hasAtMark',
+          },
+          {
+            validator: (value: string, _property: string, _unsafe) => {
+              return value.includes('localhost')
+            },
+            params: undefined,
+            patternIdSuffix: 'hasLocalhost',
+          },
+        ],
+      }),
+    })
+
+    const p1 = Model.validate({ text: 'mail@localhost' })
+    const p2 = Model.validate({ text: 'maillocalhost' })
+    const p3 = Model.validate({ text: 'mail@127.0.0.1' })
+
+    expect(p1.valid).toBeTruthy()
+    expect(p2.valid).toBeFalsy()
+    expect(p2.errors[0].patternId).toEqual('ddmv.validator.hasAtMark')
+    expect(p3.errors[0].patternId).toEqual('ddmv.validator.hasLocalhost')
+  })
 })

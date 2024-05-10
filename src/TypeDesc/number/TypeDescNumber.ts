@@ -1,27 +1,10 @@
-import type { TypeMeta } from '../object/TypeDescObject'
+import type { TypeMeta, ValidationErrorThrower } from '../object/TypeDescObject'
 import { TypeDesc } from '../object/TypeDescObject'
-import { ValidationError, ValidatorUtil } from '~/Validator/Validator'
-import type { ValidationResultContext } from '~/Validator/ValidationResultContext'
-
-function asNumber(input: any) {
-    if (!input === undefined)
-        return undefined
-    if (typeof input === 'number')
-        return input
-    if (typeof input === 'string' && input.trim() === '')
-        return undefined
-    try {
-        const n = Number(input)
-        return Number.isNaN(n) ? undefined : n
-    }
-    catch (e) {
-        return undefined
-    }
-}
+import { UnsafeValidatorCaller, V_RULE } from '~/Utils/ValidLogicCaller'
+import { tryParseNumber } from '~/Utils/TryParse'
 
 export interface TypeMetaNumber extends TypeMeta {
     number?: {
-        parse?: 'Int' | 'Float'
         required?: boolean
         maxRange?: number
         minRange?: number
@@ -29,56 +12,42 @@ export interface TypeMetaNumber extends TypeMeta {
 }
 
 export class TypeDescNumber extends TypeDesc<number, TypeMetaNumber, string | number> {
-    public validateInternal(ctx: ValidationResultContext, prop: string, input: any) {
-        const ErrorApplier = (patternId: string) => {
-            ctx.addError(patternId, prop, this._meta?.label)
-            throw new ValidationError()
-        }
+    protected tryParse(property: string | undefined, input: string) {
+        return tryParseNumber(input, { property, label: this._meta?.label })
+    }
 
-        /**
-         * 数値変換検証.
-         */
-        ValidatorUtil(
-            RULE => RULE.NUMBER.PARSE,
-            input,
-            undefined,
-            ErrorApplier,
-        )
-
-        // Numberに変換
-        const inputNumber = asNumber(input)
-
+    protected validateInternal(property: string | undefined, parsed: number, validationErrorThrower: ValidationErrorThrower) {
         /**
          * 必須.
          */
-        ValidatorUtil(
-            RULE => RULE.NUMBER.REQUIRED,
-            inputNumber,
+        UnsafeValidatorCaller(
+            V_RULE.NUMBER.REQUIRED,
+            parsed,
             this._meta?.number?.required,
-            ErrorApplier,
+            validationErrorThrower,
         )
 
         /**
          * 最大値
          */
-        ValidatorUtil(
-            RULE => RULE.NUMBER.MAX_RANGE,
-            inputNumber,
+        UnsafeValidatorCaller(
+            V_RULE.NUMBER.MAX_RANGE,
+            parsed,
             this._meta?.number?.maxRange,
-            ErrorApplier,
+            validationErrorThrower,
         )
 
         /**
          * 最小値
          */
-        ValidatorUtil(
-            RULE => RULE.NUMBER.MIN_RANGE,
-            inputNumber,
+        UnsafeValidatorCaller(
+            V_RULE.NUMBER.MIN_RANGE,
+            parsed,
             this._meta?.number?.minRange,
-            ErrorApplier,
+            validationErrorThrower,
         )
 
-        return { valid: true, parsed: inputNumber }
+        return true
     }
 
     static create(meta: TypeMetaNumber = {}) {

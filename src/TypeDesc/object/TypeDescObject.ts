@@ -1,5 +1,5 @@
-import { ValidationResultContext } from '~/Validator/ValidationResultContext'
-import { ValidationError } from '~/Validator/Validator'
+import { ValidationResultContext } from '../../Utils/ValidationResultContext'
+import { TryParseError, ValidationError } from '../../Utils/ValidErrors'
 /**
  * ============================================================
  * TypeDesc refs
@@ -12,8 +12,11 @@ export interface TypeMeta {
 
 export interface CustomValidatorConfig {
     validator: (value: any, property: string, unsafe: { ctx: ValidationResultContext }) => boolean
+    params: any
     patternIdSuffix: string
 }
+
+export type ValidationErrorThrower = (patternId: string, params?: any, input?: any) => void
 
 export abstract class TypeDesc<
     Output = any,
@@ -28,7 +31,8 @@ export abstract class TypeDesc<
         this._meta = meta
     }
 
-    protected abstract validateInternal(ctx: ValidationResultContext, property: string | undefined, input: any): { valid: boolean, parsed: Output | undefined }
+    protected abstract tryParse(property: string | undefined, input: any): Output | undefined
+    protected abstract validateInternal(property: string | undefined, parsed: any, validationErrorThrower: ValidationErrorThrower): boolean
 
     public validate(
         input: any,
@@ -48,23 +52,25 @@ export abstract class TypeDesc<
             }
             else {
                 try {
-                    const res = this.validateInternal(ctx, property, input)
+                    const parsed = this.tryParse(property, input)
+                    const validationErrorThrower = (patternId: string, params: any) => { throw new ValidationError(patternId, property, params, this._meta?.label, parsed) }
+                    const res = this.validateInternal(property, parsed, validationErrorThrower)
                     if (res && property && this._meta?.validators) {
                         for (const vConfig of this._meta?.validators) {
-                            const cvRes = vConfig.validator(input, property, { ctx })
-                            if (!cvRes) {
-                                // TODO: add Error
-                                res.valid = false
-                            }
+                            if (!vConfig.validator(input, property, { ctx }))
+                                throw new ValidationError(`ddmv.validator.${vConfig.patternIdSuffix}`, property, vConfig.params, this._meta.label, parsed)
                         }
                     }
-                    ctx.mapping(property, res.parsed)
+                    ctx.mapping(property, parsed, res)
                 }
                 catch (e) {
-                    if (e instanceof ValidationError)
+                    if (e instanceof TryParseError || e instanceof ValidationError) {
+                        ctx.addError(e.getPatternId(), property, this._meta?.label, e)
                         ctx.mapping(property, undefined)
-                    else
+                    }
+                    else {
                         throw e
+                    }
                 }
             }
         }
@@ -109,12 +115,12 @@ export class TypeDescObject<
         TypeMetaObject<T>,
         Input
     > {
-    protected convertIO(input: Input): Output {
-        return input as unknown as Output // No convert :Model Root
+    protected tryParse(_property: any, _input: any): Output | undefined {
+        throw new Error('DDMV: No implements TypeDescObject::tryParse')
     }
 
-    protected validateInternal(_parentCtx: ValidationResultContext, _parentPropKey: string, input: any) {
-        return { valid: true, parsed: this.convertIO(input) } // No implements :Model Root
+    protected validateInternal(_input: any, _parseErrorThrower: ValidationErrorThrower): boolean {
+        throw new Error('DDMV: No implements TypeDescObject::validateInternal')
     }
 
     public static create<T extends DDMVModel>(model: T) {
