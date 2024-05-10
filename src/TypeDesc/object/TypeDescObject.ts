@@ -1,5 +1,5 @@
-import { ValidationResultContext } from '../../Utils/ValidationResultContext'
-import { TryParseError, ValidationError } from '../../Utils/ValidErrors'
+import { ValidationResultContext } from '~/Utils/ValidationResultContext'
+import { TryParseError, ValidationError } from '~/Utils/ValidErrors'
 /**
  * ============================================================
  * TypeDesc refs

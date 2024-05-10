@@ -1,7 +1,7 @@
 import type { TypeMeta, ValidationErrorThrower } from '../object/TypeDescObject'
 import { TypeDesc } from '../object/TypeDescObject'
-import { UnsafeValidatorCaller, V_RULE } from '~/Utils/ValidLogicCaller'
 import { tryParseString } from '~/Utils/TryParse'
+import { UnsafeValidatorCaller, V_RULE } from '~/Utils/ValidLogicCaller'
 
 export interface TypeMetaString extends TypeMeta {
     string?: {
